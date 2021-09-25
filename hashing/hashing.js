@@ -27,17 +27,58 @@ Blockchain.blocks.push({
 	timestamp: Date.now(),
 });
 
-// TODO: insert each line into blockchain
-// for (let line of poem) {
-// }
+// NOTE PART 1
 
-// console.log(`Blockchain is valid: ${verifyChain(Blockchain)}`);
-
-
-// **********************************
-
-function blockHash(bl) {
-	return crypto.createHash("sha256").update(
-		// TODO: use block data to calculate hash
-	).digest("hex");
+let hashBlock = (block) => {
+	const { index, timestamp, data, prevHash } = block
+	return crypto.createHash("sha256").update(`${index}${prevHash}${data}${timestamp}`).digest("hex");
 }
+
+let createBlock = (newData) => {
+	let lastBlock = Blockchain.blocks[Blockchain.blocks.length - 1]
+
+	let newBlock = {}
+
+	newBlock.index = lastBlock.index + 1
+	newBlock.prevHash = lastBlock.hash
+	newBlock.data = newData
+	newBlock.timestamp = Date.now()
+
+	newBlock.hash = hashBlock(newBlock)
+
+	Blockchain.blocks.push(newBlock)
+}
+
+poem.forEach(line => {
+	createBlock(line)
+});
+
+// NOTE PART 2
+
+let verifyBlock = (block, chain) => {
+	const { index, hash, data, prevHash } = block
+
+	if (index === 0 && hash === "000000" && prevHash === undefined) {
+		return true
+	}
+	if (!data) return false
+	if (!prevHash) return false
+	if (!index) return false
+	if (hash !== hashBlock(block)) return false
+	if (prevHash !== chain[index - 1].hash) return false
+
+	return true
+}
+
+let verifyChain = (blockchain) => {
+	let Results = []
+	blockchain.blocks.forEach(block => {
+		let blockResult = verifyBlock(block, blockchain.blocks)
+		Results.push(blockResult)
+	})
+
+	let isValid = Results.every(result => result)
+	return isValid
+}
+
+console.log(`Blockchain is valid: ${verifyChain(Blockchain)}`);
